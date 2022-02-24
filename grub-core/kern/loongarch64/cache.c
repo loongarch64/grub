@@ -1,6 +1,6 @@
 /*
  *  GRUB  --  GRand Unified Bootloader
- *  Copyright (C) 2013  Free Software Foundation, Inc.
+ *  Copyright (C) 2021  Free Software Foundation, Inc.
  *
  *  GRUB is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,23 +16,24 @@
  *  along with GRUB.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <grub/symbol.h>
+#include <grub/cache.h>
+#include <grub/misc.h>
 
-	.file 	"startup.S"
-	.text
-FUNCTION(_start)
-	/*
-	 *  EFI_SYSTEM_TABLE and EFI_HANDLE are passed in x1/x0.
-	 */
-	ldr	x2, efi_image_handle_val
-	str	x0, [x2]
-	ldr	x2, efi_system_table_val
-	str	x1, [x2]
-	ldr	x2, grub_main_val
-	b	x2
-grub_main_val:
-	.quad	EXT_C(grub_main)
-efi_system_table_val:
-	.quad	EXT_C(grub_efi_system_table)
-efi_image_handle_val:
-	.quad	EXT_C(grub_efi_image_handle)
+/* Prototypes for asm functions. */
+void grub_arch_clean_dcache_range (void);
+void grub_arch_invalidate_icache_range (void);
+
+void
+grub_arch_sync_caches (void *address __attribute__((unused)),
+		       grub_size_t len __attribute__((unused)))
+{
+  grub_arch_clean_dcache_range ();
+  grub_arch_invalidate_icache_range ();
+}
+
+void
+grub_arch_sync_dma_caches (volatile void *address __attribute__((unused)),
+			   grub_size_t len __attribute__((unused)))
+{
+  /* DMA non-coherent devices not supported yet */
+}

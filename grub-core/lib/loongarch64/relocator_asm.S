@@ -1,6 +1,6 @@
 /*
  *  GRUB  --  GRand Unified Bootloader
- *  Copyright (C) 2013  Free Software Foundation, Inc.
+ *  Copyright (C) 2021 Free Software Foundation, Inc.
  *
  *  GRUB is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,24 +15,37 @@
  *  You should have received a copy of the GNU General Public License
  *  along with GRUB.  If not, see <http://www.gnu.org/licenses/>.
  */
+/* Used to support ELF linux kernel */
 
 #include <grub/symbol.h>
 
-	.file 	"startup.S"
-	.text
-FUNCTION(_start)
-	/*
-	 *  EFI_SYSTEM_TABLE and EFI_HANDLE are passed in x1/x0.
-	 */
-	ldr	x2, efi_image_handle_val
-	str	x0, [x2]
-	ldr	x2, efi_system_table_val
-	str	x1, [x2]
-	ldr	x2, grub_main_val
-	b	x2
-grub_main_val:
-	.quad	EXT_C(grub_main)
-efi_system_table_val:
-	.quad	EXT_C(grub_efi_system_table)
-efi_image_handle_val:
-	.quad	EXT_C(grub_efi_image_handle)
+.p2align	4
+
+VARIABLE (grub_relocator_forward_start)
+
+copycont1:
+  ld.d   $a7, $a4, 0
+  st.d   $a7, $a5, 0
+  addi.d $a4, $a4, 8
+  addi.d $a6, $a6, -8
+  addi.d $a5, $a5, 8
+  bne    $a6, $zero, copycont1
+
+VARIABLE (grub_relocator_forward_end)
+
+VARIABLE (grub_relocator_backward_start)
+
+  add.d  $a5, $a5, $a6
+  add.d  $a4, $a4, $a6
+  addi.d $a5, $a5, -8
+  addi.d $a4, $a4, -8
+
+copycont2:
+  ld.w   $a7, $a4, 0
+  st.w   $a7, $a5, 0
+  addi.d $a4, $a4, -8
+  addi.d $a6, $a6, -8
+  addi.d $a5, $a5, -8
+  bne    $a6, $zero, copycont2
+
+VARIABLE (grub_relocator_backward_end)

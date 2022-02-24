@@ -1,6 +1,6 @@
 /*
  *  GRUB  --  GRand Unified Bootloader
- *  Copyright (C) 2013  Free Software Foundation, Inc.
+ *  Copyright (C) 2021 Free Software Foundation, Inc.
  *
  *  GRUB is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,24 +15,39 @@
  *  You should have received a copy of the GNU General Public License
  *  along with GRUB.  If not, see <http://www.gnu.org/licenses/>.
  */
+/* Used to support ELF linux kernel */
 
+#ifndef GRUB_MEMORY_CPU_HEADER
+#define GRUB_MEMORY_CPU_HEADER	1
+
+#ifndef ASM_FILE
 #include <grub/symbol.h>
+#include <grub/err.h>
+#include <grub/types.h>
+#endif
 
-	.file 	"startup.S"
-	.text
-FUNCTION(_start)
-	/*
-	 *  EFI_SYSTEM_TABLE and EFI_HANDLE are passed in x1/x0.
-	 */
-	ldr	x2, efi_image_handle_val
-	str	x0, [x2]
-	ldr	x2, efi_system_table_val
-	str	x1, [x2]
-	ldr	x2, grub_main_val
-	b	x2
-grub_main_val:
-	.quad	EXT_C(grub_main)
-efi_system_table_val:
-	.quad	EXT_C(grub_efi_system_table)
-efi_image_handle_val:
-	.quad	EXT_C(grub_efi_image_handle)
+#ifndef ASM_FILE
+
+typedef grub_addr_t grub_phys_addr_t;
+
+static inline grub_phys_addr_t
+grub_vtop (void *a)
+{
+  return ((grub_phys_addr_t) a) & 0xffffffffffffUL;
+}
+
+static inline void *
+grub_map_memory (grub_phys_addr_t a, grub_size_t size __attribute__ ((unused)))
+{
+  return (void *) a;
+}
+
+static inline void
+grub_unmap_memory (void *a __attribute__ ((unused)),
+		   grub_size_t size __attribute__ ((unused)))
+{
+}
+
+#endif
+
+#endif

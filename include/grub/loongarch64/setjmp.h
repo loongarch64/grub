@@ -1,6 +1,6 @@
 /*
  *  GRUB  --  GRand Unified Bootloader
- *  Copyright (C) 2013  Free Software Foundation, Inc.
+ *  Copyright (C) 2021 Free Software Foundation, Inc.
  *
  *  GRUB is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,23 +16,12 @@
  *  along with GRUB.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <grub/symbol.h>
+#ifndef GRUB_SETJMP_CPU_HEADER
+#define GRUB_SETJMP_CPU_HEADER	1
 
-	.file 	"startup.S"
-	.text
-FUNCTION(_start)
-	/*
-	 *  EFI_SYSTEM_TABLE and EFI_HANDLE are passed in x1/x0.
-	 */
-	ldr	x2, efi_image_handle_val
-	str	x0, [x2]
-	ldr	x2, efi_system_table_val
-	str	x1, [x2]
-	ldr	x2, grub_main_val
-	b	x2
-grub_main_val:
-	.quad	EXT_C(grub_main)
-efi_system_table_val:
-	.quad	EXT_C(grub_efi_system_table)
-efi_image_handle_val:
-	.quad	EXT_C(grub_efi_image_handle)
+typedef grub_uint64_t grub_jmp_buf[12];
+
+int grub_setjmp (grub_jmp_buf env) RETURNS_TWICE;
+void grub_longjmp (grub_jmp_buf env, int val) __attribute__ ((noreturn));
+
+#endif /* ! GRUB_SETJMP_CPU_HEADER */

@@ -1,6 +1,6 @@
 /*
  *  GRUB  --  GRand Unified Bootloader
- *  Copyright (C) 2013  Free Software Foundation, Inc.
+ *  Copyright (C) 2021 Free Software Foundation, Inc.
  *
  *  GRUB is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,23 +16,9 @@
  *  along with GRUB.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <grub/symbol.h>
+#ifndef GRUB_MEMORY_CPU_HEADER
+#include <grub/efi/memory.h>
 
-	.file 	"startup.S"
-	.text
-FUNCTION(_start)
-	/*
-	 *  EFI_SYSTEM_TABLE and EFI_HANDLE are passed in x1/x0.
-	 */
-	ldr	x2, efi_image_handle_val
-	str	x0, [x2]
-	ldr	x2, efi_system_table_val
-	str	x1, [x2]
-	ldr	x2, grub_main_val
-	b	x2
-grub_main_val:
-	.quad	EXT_C(grub_main)
-efi_system_table_val:
-	.quad	EXT_C(grub_efi_system_table)
-efi_image_handle_val:
-	.quad	EXT_C(grub_efi_image_handle)
+#define GRUB_EFI_MAX_USABLE_ADDRESS 0xffffffffffffULL
+
+#endif /* ! GRUB_MEMORY_CPU_HEADER */

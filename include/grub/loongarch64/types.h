@@ -1,6 +1,6 @@
 /*
  *  GRUB  --  GRand Unified Bootloader
- *  Copyright (C) 2013  Free Software Foundation, Inc.
+ *  Copyright (C) 2021 Free Software Foundation, Inc.
  *
  *  GRUB is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,23 +16,19 @@
  *  along with GRUB.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <grub/symbol.h>
+#ifndef GRUB_TYPES_CPU_HEADER
+#define GRUB_TYPES_CPU_HEADER	1
 
-	.file 	"startup.S"
-	.text
-FUNCTION(_start)
-	/*
-	 *  EFI_SYSTEM_TABLE and EFI_HANDLE are passed in x1/x0.
-	 */
-	ldr	x2, efi_image_handle_val
-	str	x0, [x2]
-	ldr	x2, efi_system_table_val
-	str	x1, [x2]
-	ldr	x2, grub_main_val
-	b	x2
-grub_main_val:
-	.quad	EXT_C(grub_main)
-efi_system_table_val:
-	.quad	EXT_C(grub_efi_system_table)
-efi_image_handle_val:
-	.quad	EXT_C(grub_efi_image_handle)
+/* The size of void *.  */
+#define GRUB_TARGET_SIZEOF_VOID_P	8
+
+/* The size of long.  */
+#define GRUB_TARGET_SIZEOF_LONG		8
+
+/* LoongArch is little-endian.  */
+#undef GRUB_TARGET_WORDS_BIGENDIAN
+
+/* Unaligned accesses are only supported if MMU is enabled.  */
+#undef GRUB_HAVE_UNALIGNED_ACCESS
+
+#endif /* ! GRUB_TYPES_CPU_HEADER */
