@@ -1736,6 +1736,15 @@ translate_relocation_pe (struct translate_context *ctx,
 	case R_LARCH_SOP_POP_32_S_5_20:
 	case R_LARCH_SOP_POP_32_S_0_5_10_16_S2:
 	case R_LARCH_SOP_POP_32_S_0_10_10_16_S2:
+	case R_LARCH_B26:
+	case R_LARCH_ABS_HI20:
+	case R_LARCH_ABS_LO12:
+	case R_LARCH_ABS64_LO20:
+	case R_LARCH_ABS64_HI12:
+	case R_LARCH_GOT64_HI20:
+	case R_LARCH_GOT64_LO12:
+	case R_LARCH_GOT64_LO20:
+	case R_LARCH_GOT64_HI12:
 	  grub_util_info ("  %s:  not adding fixup: 0x%08x : 0x%08x",
 			  __FUNCTION__,
 			  (unsigned int) addr,

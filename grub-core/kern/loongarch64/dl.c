@@ -65,7 +65,7 @@ grub_arch_dl_relocate_symbols (grub_dl_t mod, void *ehdr,
 	return grub_error (GRUB_ERR_BAD_MODULE,
 			   "reloc offset is outside the segment");
 
-      sym = (Elf_Sym *) ((char*)mod->symtab
+      sym = (Elf_Sym *) ((char*) mod->symtab
 			 + mod->symsize * ELF_R_SYM (rel->r_info));
 
       sym_addr = sym->st_value;
