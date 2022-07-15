@@ -1076,6 +1076,9 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 		   case R_AARCH64_ADR_GOT_PAGE:
 		     {
 		       Elf64_Rela *rel2;
+		       /*
+			  Page(G(GDAT(S+A)))-Page(P)	Set the immediate value of an ADRP to bits [32:12] of X; check that –232 <= X < 232
+			  */
 		       grub_int64_t gpoffset = (((char *) gpptr - (char *) pe_target + image_target->vaddr_offset) & ~0xfffULL)
 			 - ((offset + target_section_addr + image_target->vaddr_offset) & ~0xfffULL);
 		       unsigned k;
@@ -1142,6 +1145,16 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 						-(target_section_addr
 						  +offset
 						  +image_target->vaddr_offset));
+		     break;
+		   case R_LARCH_GOT64_HI20:
+		       {
+			 /*
+			    R_LARCH_GOT64_HI20       79        (*(uint32_t *) PC)[24:5] = (GP+G)[31:12]
+			    GP: _GLOBAL_OFFSET_TABLE_
+			    G: GP offset of the GOT entry of sym
+			    FIXME: How to get GP + G here?
+			 */
+		       }
 		     break;
 		   GRUB_LOONGARCH64_RELOCATION (&stack, target, sym_addr)
 		   default:
