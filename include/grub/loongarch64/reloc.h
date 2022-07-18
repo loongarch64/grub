@@ -22,6 +22,19 @@
 
 #define LOONGARCH64_STACK_MAX 16
 
+//case R_LARCH_GOT64_HI20:				\
+//  grub_loongarch64_got64_hi20 (PLACE, OFFSET);	\
+//  break;						\
+//case R_LARCH_GOT64_LO12:				\
+//  grub_loongarch64_got64_lo12 (PLACE, OFFSET);	\
+//  break;						\
+//case R_LARCH_GOT64_LO20:				\
+//  grub_loongarch64_got64_lo20 (PLACE, OFFSET);	\
+//  break;						\
+//case R_LARCH_GOT64_HI12:				\
+//  grub_loongarch64_got64_hi12 (PLACE, OFFSET);	\
+//  break;
+
 struct grub_loongarch64_stack
 {
   grub_uint64_t data[LOONGARCH64_STACK_MAX];
@@ -135,18 +148,6 @@ void grub_loongarch64_got64_hi12 	      (grub_uint64_t *place,
     break;						\
   case R_LARCH_ABS64_HI12:				\
     grub_loongarch64_abs64_hi12 (PLACE, OFFSET);	\
-    break;						\
-  case R_LARCH_GOT64_HI20:				\
-    grub_loongarch64_got64_hi20 (PLACE, OFFSET);	\
-    break;						\
-  case R_LARCH_GOT64_LO12:				\
-    grub_loongarch64_got64_lo12 (PLACE, OFFSET);	\
-    break;						\
-  case R_LARCH_GOT64_LO20:				\
-    grub_loongarch64_got64_lo20 (PLACE, OFFSET);	\
-    break;						\
-  case R_LARCH_GOT64_HI12:				\
-    grub_loongarch64_got64_hi12 (PLACE, OFFSET);	\
     break;
 
 #endif /* GRUB_LOONGARCH64_RELOC_H */

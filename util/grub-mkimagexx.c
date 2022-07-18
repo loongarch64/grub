@@ -839,9 +839,12 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 	    Elf_Addr *target;
 	    Elf_Addr addend;
 
+	    int la_got_flag=0;
+
 	    offset = grub_target_to_host (r->r_offset);
 	    target = SUFFIX (get_target_address) (e, target_section,
 						  offset, image_target);
+   	    grub_uint64_t got_off_addr = (grub_uint64_t)e  + got_off;
 	    info = grub_target_to_host (r->r_info);
 	    sym_addr = SUFFIX (get_symbol_address) (e, smd->symtab,
 						    ELF_R_SYM (info), image_target);
@@ -1148,12 +1151,58 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 		     break;
 		   case R_LARCH_GOT64_HI20:
 		       {
-			 /*
-			    R_LARCH_GOT64_HI20       79        (*(uint32_t *) PC)[24:5] = (GP+G)[31:12]
-			    GP: _GLOBAL_OFFSET_TABLE_
-			    G: GP offset of the GOT entry of sym
-			    FIXME: How to get GP + G here?
-			 */
+			if(la_got_flag == 0){
+			     *(grub_uint64_t*)(got_off_addr)= sym_addr;
+			}
+			la_got_flag++;
+			*target = (*target) | ((got_off& 0xfffff000)>>12<<5)     ;
+			if(la_got_flag == 4){
+				got_off++;
+				la_got_flag = 0;
+			}
+		       grub_util_info ("got_off:  %lx %lx %lx",got_off,target,image_target->vaddr_offset);
+		       }
+		     break;
+		   case R_LARCH_GOT64_LO20:
+		       {
+			if(la_got_flag == 0){
+			     *(grub_uint64_t*)(got_off_addr)= sym_addr;
+			}
+			la_got_flag++;
+			*target = (*target) | ((got_off& 0xfffff00000000)>>32<<5)     ;
+			if(la_got_flag == 4){
+				got_off++;
+				la_got_flag = 0;
+			}
+		       grub_util_info ("got_off:  %lx %lx %lx",got_off,target,image_target->vaddr_offset);
+		       }
+		     break;
+		   case R_LARCH_GOT64_HI12:
+		       {
+			if(la_got_flag == 0){
+			     *(grub_uint64_t*)(got_off_addr)= sym_addr;
+			}
+			la_got_flag++;
+			*target = (*target) | ((got_off& 0xfff0000000000000)>>52<<10)     ;
+			if(la_got_flag == 4){
+				got_off++;
+				la_got_flag = 0;
+			}
+		       grub_util_info ("got_off:  %lx",got_off);
+		       }
+		     break;
+		   case R_LARCH_GOT64_LO12:
+		       {
+			if(la_got_flag == 0){
+			     *(grub_uint64_t*)(got_off_addr)= sym_addr;
+			}
+			la_got_flag++;
+			*target = (*target) | ((got_off& 0xfff)<<10)     ;
+			if(la_got_flag == 4){
+				got_off++;
+				la_got_flag = 0;
+			}
+		       grub_util_info ("got_off:  %lx",got_off);
 		       }
 		     break;
 		   GRUB_LOONGARCH64_RELOCATION (&stack, target, sym_addr)
@@ -1758,10 +1807,10 @@ translate_relocation_pe (struct translate_context *ctx,
 	case R_LARCH_GOT64_LO12:
 	case R_LARCH_GOT64_LO20:
 	case R_LARCH_GOT64_HI12:
-	  grub_util_info ("  %s:  not adding fixup: 0x%08x : 0x%08x",
-			  __FUNCTION__,
-			  (unsigned int) addr,
-			  (unsigned int) ctx->current_address);
+	//  grub_util_info ("  %s:  not adding fixup: 0x%08x : 0x%08x",
+	//		  __FUNCTION__,
+	//		  (unsigned int) addr,
+	//		  (unsigned int) ctx->current_address);
 	  break;
 	default:
 	  grub_util_error (_("relocation 0x%x is not implemented yet"),
@@ -2355,6 +2404,7 @@ SUFFIX (locate_sections) (Elf_Ehdr *e, const char *kernel_path,
     layout->kernel_size = layout->end;
 }
 
+#define LA_MAX_SIZE 0x10000
 char *
 SUFFIX (grub_mkimage_load_image) (const char *kernel_path,
 				  size_t total_module_size,
@@ -2487,6 +2537,17 @@ SUFFIX (grub_mkimage_load_image) (const char *kernel_path,
 	  grub_arm64_dl_get_tramp_got_size (e, &tramp, &layout->got_size);
 
 	  layout->got_off = layout->kernel_size;
+	  layout->kernel_size += ALIGN_UP (layout->got_size, 16);
+	}
+      if (image_target->elf_target == EM_LOONGARCH)
+	{
+	  grub_size_t tramp;
+
+	  layout->kernel_size = ALIGN_UP (layout->kernel_size, 16);
+
+	  layout->got_off = layout->kernel_size;
+	  layout->got_size= (0x8)*(LA_MAX_SIZE);
+
 	  layout->kernel_size += ALIGN_UP (layout->got_size, 16);
 	}
 #endif
