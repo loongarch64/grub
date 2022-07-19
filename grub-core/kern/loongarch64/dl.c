@@ -49,8 +49,11 @@ grub_arch_dl_relocate_symbols (grub_dl_t mod, void *ehdr,
 			       Elf_Shdr *s, grub_dl_segment_t seg)
 {
   Elf_Rel *rel, *max;
+  unsigned unmatched_adr_got_page = 0;
   struct grub_loongarch64_stack stack;
   grub_loongarch64_stack_init (&stack);
+  //grub_uint64_t *gp = mod->gotptr;
+  //grub_uint64_t *gpptr = (void *) (pe_target + got_off);
 
   for (rel = (Elf_Rel *) ((char *) ehdr + s->sh_offset),
 	 max = (Elf_Rel *) ((char *) rel + s->sh_size);
@@ -85,6 +88,17 @@ grub_arch_dl_relocate_symbols (grub_dl_t mod, void *ehdr,
 	case R_LARCH_SOP_PUSH_PLT_PCREL:
 	  grub_loongarch64_sop_push (&stack, sym_addr - (grub_uint64_t)place);
 	  break;
+//	case R_LARCH_GOT64_HI20:
+//	    {
+//	      if (unmatched_adr_got_page == 0) {
+//		  *gpptr = grub_host_to_target64 (sym_addr);
+//	      }
+//	      unmatched_adr_got_page++;
+//	      grub_loongarch64_got64_hi20 (target, got_off);
+//	      if (unmatched_adr_got_page == 4) {
+//		  got_off++;
+//		  unmatched_adr_got_page = 0;
+//	      }
 	GRUB_LOONGARCH64_RELOCATION (&stack, place, sym_addr)
 	default:
 	  {

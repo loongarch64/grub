@@ -22,19 +22,6 @@
 
 #define LOONGARCH64_STACK_MAX 16
 
-//case R_LARCH_GOT64_HI20:				\
-//  grub_loongarch64_got64_hi20 (PLACE, OFFSET);	\
-//  break;						\
-//case R_LARCH_GOT64_LO12:				\
-//  grub_loongarch64_got64_lo12 (PLACE, OFFSET);	\
-//  break;						\
-//case R_LARCH_GOT64_LO20:				\
-//  grub_loongarch64_got64_lo20 (PLACE, OFFSET);	\
-//  break;						\
-//case R_LARCH_GOT64_HI12:				\
-//  grub_loongarch64_got64_hi12 (PLACE, OFFSET);	\
-//  break;
-
 struct grub_loongarch64_stack
 {
   grub_uint64_t data[LOONGARCH64_STACK_MAX];
@@ -43,6 +30,7 @@ struct grub_loongarch64_stack
 };
 
 typedef struct grub_loongarch64_stack* grub_loongarch64_stack_t;
+grub_err_t grub_loongarch64_dl_get_got_size (const void *ehdr, grub_size_t *got);
 
 void grub_loongarch64_stack_init	     (grub_loongarch64_stack_t stack);
 void grub_loongarch64_sop_push		     (grub_loongarch64_stack_t stack,
@@ -134,20 +122,21 @@ void grub_loongarch64_got64_hi12 	      (grub_uint64_t *place,
     break;							\
   case R_LARCH_SOP_POP_32_S_0_10_10_16_S2:			\
     grub_loongarch64_sop_32_s_0_10_10_16_s2 (STACK, PLACE);	\
-  case R_LARCH_B26:					\
-    grub_loongarch64_b26 (PLACE, OFFSET);		\
-    break;						\
-  case R_LARCH_ABS_HI20:				\
-    grub_loongarch64_abs_hi20 (PLACE, OFFSET);		\
-    break;						\
-  case R_LARCH_ABS_LO12:				\
-    grub_loongarch64_abs_lo12 (PLACE, OFFSET);		\
-    break;						\
-  case R_LARCH_ABS64_LO20:				\
-    grub_loongarch64_abs64_lo20 (PLACE, OFFSET);	\
-    break;						\
-  case R_LARCH_ABS64_HI12:				\
-    grub_loongarch64_abs64_hi12 (PLACE, OFFSET);	\
+    break;							\
+  case R_LARCH_B26:						\
+    grub_loongarch64_b26 (PLACE, OFFSET);			\
+    break;							\
+  case R_LARCH_ABS_HI20:					\
+    grub_loongarch64_abs_hi20 (PLACE, OFFSET);			\
+    break;							\
+  case R_LARCH_ABS_LO12:					\
+    grub_loongarch64_abs_lo12 (PLACE, OFFSET);			\
+    break;							\
+  case R_LARCH_ABS64_LO20:					\
+    grub_loongarch64_abs64_lo20 (PLACE, OFFSET);		\
+    break;							\
+  case R_LARCH_ABS64_HI12:					\
+    grub_loongarch64_abs64_hi12 (PLACE, OFFSET);		\
     break;
 
 #endif /* GRUB_LOONGARCH64_RELOC_H */

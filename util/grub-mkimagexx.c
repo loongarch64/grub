@@ -1151,20 +1151,46 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 		     break;
 		   case R_LARCH_GOT64_HI20:
 		       {
+			 if (unmatched_adr_got_page == 0) {
+			     *gpptr = grub_host_to_target64 (sym_addr);
+			 }
+			 unmatched_adr_got_page++;
+			 grub_loongarch64_got64_hi20 (target, got_off);
+		       grub_util_info ("hi20, got_off:  %lx %lx %lx",got_off, target, image_target->vaddr_offset);
+			 if (unmatched_adr_got_page == 4) {
+			     gpptr++;
+			     unmatched_adr_got_page = 0;
+			 }
+
+#if 0
 			if(la_got_flag == 0){
 			     *(grub_uint64_t*)(got_off_addr)= sym_addr;
 			}
 			la_got_flag++;
-			*target = (*target) | ((got_off& 0xfffff000)>>12<<5)     ;
+
+			*target = (*target) | ((got_off & 0xfffff000)>>12<<5);
 			if(la_got_flag == 4){
 				got_off++;
 				la_got_flag = 0;
 			}
-		       grub_util_info ("got_off:  %lx %lx %lx",got_off,target,image_target->vaddr_offset);
+#endif
 		       }
 		     break;
 		   case R_LARCH_GOT64_LO20:
 		       {
+			 if (unmatched_adr_got_page == 0) {
+			     *gpptr = grub_host_to_target64 (sym_addr);
+			 }
+			 unmatched_adr_got_page++;
+			 grub_loongarch64_got64_lo20 (target, got_off);
+		       grub_util_info ("lo20 got_off:  %lx %lx %lx",got_off,target,image_target->vaddr_offset);
+			 if (unmatched_adr_got_page == 4) {
+			     //got_off++;
+			     gpptr++;
+			     unmatched_adr_got_page = 0;
+			 }
+
+#if 0
 			if(la_got_flag == 0){
 			     *(grub_uint64_t*)(got_off_addr)= sym_addr;
 			}
@@ -1174,11 +1200,23 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 				got_off++;
 				la_got_flag = 0;
 			}
-		       grub_util_info ("got_off:  %lx %lx %lx",got_off,target,image_target->vaddr_offset);
+#endif
 		       }
 		     break;
 		   case R_LARCH_GOT64_HI12:
 		       {
+			 if (unmatched_adr_got_page == 0) {
+			     *gpptr = grub_host_to_target64 (sym_addr);
+			 }
+			 unmatched_adr_got_page++;
+			 grub_loongarch64_got64_hi12 (target, got_off);
+		       grub_util_info ("hi12 got_off:  %lx %lx %lx",got_off,target,image_target->vaddr_offset);
+			 if (unmatched_adr_got_page == 4) {
+			     //got_off++;
+			     gpptr++;
+			     unmatched_adr_got_page = 0;
+			 }
+#if 0
 			if(la_got_flag == 0){
 			     *(grub_uint64_t*)(got_off_addr)= sym_addr;
 			}
@@ -1188,11 +1226,24 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 				got_off++;
 				la_got_flag = 0;
 			}
-		       grub_util_info ("got_off:  %lx",got_off);
+#endif
+		       //grub_util_info ("got_off:  %lx",got_off);
 		       }
 		     break;
 		   case R_LARCH_GOT64_LO12:
 		       {
+			 if (unmatched_adr_got_page == 0) {
+			     *gpptr = grub_host_to_target64 (sym_addr);
+			 }
+			 unmatched_adr_got_page++;
+			 grub_loongarch64_got64_lo12 (target, got_off);
+			 grub_util_info ("lo12 got_off: %lx %lx %lx %lx", sym_addr, got_off, target, image_target->vaddr_offset);
+			 if (unmatched_adr_got_page == 4) {
+			     //got_off++;
+			     gpptr++;
+			     unmatched_adr_got_page = 0;
+			 }
+#if 0
 			if(la_got_flag == 0){
 			     *(grub_uint64_t*)(got_off_addr)= sym_addr;
 			}
@@ -1202,7 +1253,8 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 				got_off++;
 				la_got_flag = 0;
 			}
-		       grub_util_info ("got_off:  %lx",got_off);
+#endif
+		       //grub_util_info ("got_off:  %lx",got_off);
 		       }
 		     break;
 		   GRUB_LOONGARCH64_RELOCATION (&stack, target, sym_addr)
@@ -1807,10 +1859,10 @@ translate_relocation_pe (struct translate_context *ctx,
 	case R_LARCH_GOT64_LO12:
 	case R_LARCH_GOT64_LO20:
 	case R_LARCH_GOT64_HI12:
-	//  grub_util_info ("  %s:  not adding fixup: 0x%08x : 0x%08x",
-	//		  __FUNCTION__,
-	//		  (unsigned int) addr,
-	//		  (unsigned int) ctx->current_address);
+	  grub_util_info ("  %s:  not adding fixup: 0x%08x : 0x%08x",
+			  __FUNCTION__,
+			  (unsigned int) addr,
+			  (unsigned int) ctx->current_address);
 	  break;
 	default:
 	  grub_util_error (_("relocation 0x%x is not implemented yet"),
@@ -2166,7 +2218,7 @@ make_reloc_section (Elf_Ehdr *e, struct grub_mkimage_layout *layout,
 		       + image_target->vaddr_offset,
 		       2 * layout->ia64jmpnum,
 		       image_target);
-  if (image_target->elf_target == EM_IA_64 || image_target->elf_target == EM_AARCH64)
+  if (image_target->elf_target == EM_IA_64 || image_target->elf_target == EM_AARCH64 || image_target->elf_target == EM_LOONGARCH)
     create_u64_fixups (&ctx,
 		       layout->got_off
 		       + image_target->vaddr_offset,
@@ -2404,7 +2456,6 @@ SUFFIX (locate_sections) (Elf_Ehdr *e, const char *kernel_path,
     layout->kernel_size = layout->end;
 }
 
-#define LA_MAX_SIZE 0x10000
 char *
 SUFFIX (grub_mkimage_load_image) (const char *kernel_path,
 				  size_t total_module_size,
@@ -2541,13 +2592,11 @@ SUFFIX (grub_mkimage_load_image) (const char *kernel_path,
 	}
       if (image_target->elf_target == EM_LOONGARCH)
 	{
-	  grub_size_t tramp;
-
 	  layout->kernel_size = ALIGN_UP (layout->kernel_size, 16);
 
-	  layout->got_off = layout->kernel_size;
-	  layout->got_size= (0x8)*(LA_MAX_SIZE);
+	  grub_loongarch64_dl_get_got_size (e, &layout->got_size);
 
+	  layout->got_off = layout->kernel_size;
 	  layout->kernel_size += ALIGN_UP (layout->got_size, 16);
 	}
 #endif

@@ -218,8 +218,8 @@ R_LARCH_ABS_HI20         67        (*(uint32_t *) PC)[24:5] = (S+A)[31:12]
 */
 void grub_loongarch64_abs_hi20 (grub_uint64_t *place, grub_uint64_t offset)
 {
-  grub_uint64_t a = offset - *place;
-  *place |= (((a >> 12) & 0xfffff) << 5);
+  //grub_uint64_t a = offset - *place;
+  *place |= (((offset >> 12) & 0xfffff) << 5);
 }
 
 /*
@@ -251,6 +251,7 @@ R_LARCH_GOT64_HI20       79        (*(uint32_t *) PC)[24:5] = (GP+G)[31:12]
 */
 void grub_loongarch64_got64_hi20 (grub_uint64_t *place, grub_uint64_t offset)
 {
+  *place |= (((offset >> 12) & 0xfffff) << 5);
 }
 
 /*
@@ -258,6 +259,7 @@ R_LARCH_GOT64_LO12       80        (*(uint32_t *) PC)[21:10] = (GP+G)[11:0]
 */
 void grub_loongarch64_got64_lo12 (grub_uint64_t *place, grub_uint64_t offset)
 {
+  *place |= ((offset & 0xfff) << 10);
 }
 
 /*
@@ -265,6 +267,7 @@ R_LARCH_GOT64_LO20       81        (*(uint32_t *) PC)[21:10] = (GP+G)[63:52]
 */
 void grub_loongarch64_got64_lo20 (grub_uint64_t *place, grub_uint64_t offset)
 {
+  *place |= (((offset >> 52 ) & 0xfff) << 10);
 }
 
 /*
@@ -272,4 +275,38 @@ R_LARCH_GOT64_HI12       82        (*(uint32_t *) PC)[24:5] = (GP+G)[51:32]
 */
 void grub_loongarch64_got64_hi12 (grub_uint64_t *place, grub_uint64_t offset)
 {
+  *place |= (((offset >> 32 ) & 0xfffff) << 5);
+}
+
+grub_err_t
+grub_loongarch64_dl_get_got_size (const void *ehdr, grub_size_t *got)
+{
+  const Elf64_Ehdr *e = ehdr;
+  grub_size_t cntg = 0;
+  const Elf64_Shdr *s;
+  unsigned i;
+
+  for (i = 0, s = (Elf64_Shdr *) ((char *) e + grub_le_to_cpu64 (e->e_shoff));
+       i < grub_le_to_cpu16 (e->e_shnum);
+       i++, s = (Elf64_Shdr *) ((char *) s + grub_le_to_cpu16 (e->e_shentsize)))
+    if (s->sh_type == grub_cpu_to_le32_compile_time (SHT_RELA))
+      {
+	const Elf64_Rela *rel, *max;
+
+	for (rel = (Elf64_Rela *) ((char *) e + grub_le_to_cpu64 (s->sh_offset)),
+	       max = (const Elf64_Rela *) ((char *) rel + grub_le_to_cpu64 (s->sh_size));
+	     rel < max; rel = (const Elf64_Rela *) ((char *) rel + grub_le_to_cpu64 (s->sh_entsize)))
+	  switch (ELF64_R_TYPE (grub_le_to_cpu64 (rel->r_info)))
+	    {
+	    case R_LARCH_GOT64_HI20:
+	    case R_LARCH_GOT64_LO20:
+	    case R_LARCH_GOT64_HI12:
+	    case R_LARCH_GOT64_LO12:
+	      cntg++;
+	      break;
+	    }
+      }
+  *got = cntg * sizeof (grub_uint64_t);
+
+  return GRUB_ERR_NONE;
 }
