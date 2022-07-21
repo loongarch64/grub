@@ -58,23 +58,23 @@ void grub_loongarch64_sop_32_s_0_5_10_16_s2  (grub_loongarch64_stack_t stack,
 void grub_loongarch64_sop_32_s_0_10_10_16_s2 (grub_loongarch64_stack_t stack,
 					      grub_uint64_t *place);
 
-void grub_loongarch64_b26		      (grub_uint64_t *place,
+void grub_loongarch64_b26		      (grub_uint32_t *place,
 					       grub_uint64_t offset);
-void grub_loongarch64_abs_hi20		      (grub_uint64_t *place,
+void grub_loongarch64_abs_hi20		      (grub_uint32_t *place,
 					       grub_uint64_t offset);
-void grub_loongarch64_abs_lo12		      (grub_uint64_t *place,
+void grub_loongarch64_abs_lo12		      (grub_uint32_t *place,
 					       grub_uint64_t offset);
-void grub_loongarch64_abs64_lo20	      (grub_uint64_t *place,
+void grub_loongarch64_abs64_lo20	      (grub_uint32_t *place,
 					       grub_uint64_t offset);
-void grub_loongarch64_abs64_hi12	      (grub_uint64_t *place,
+void grub_loongarch64_abs64_hi12	      (grub_uint32_t *place,
 					       grub_uint64_t offset);
-void grub_loongarch64_got64_hi20 	      (grub_uint64_t *place,
+void grub_loongarch64_got64_hi20 	      (grub_uint32_t *place,
 					       grub_uint64_t offset);
-void grub_loongarch64_got64_lo12 	      (grub_uint64_t *place,
+void grub_loongarch64_got64_lo12 	      (grub_uint32_t *place,
 					       grub_uint64_t offset);
-void grub_loongarch64_got64_lo20 	      (grub_uint64_t *place,
+void grub_loongarch64_got64_lo20 	      (grub_uint32_t *place,
 					       grub_uint64_t offset);
-void grub_loongarch64_got64_hi12 	      (grub_uint64_t *place,
+void grub_loongarch64_got64_hi12 	      (grub_uint32_t *place,
 					       grub_uint64_t offset);
 
 #define GRUB_LOONGARCH64_RELOCATION(STACK, PLACE, OFFSET)	\
@@ -122,21 +122,21 @@ void grub_loongarch64_got64_hi12 	      (grub_uint64_t *place,
     break;							\
   case R_LARCH_SOP_POP_32_S_0_10_10_16_S2:			\
     grub_loongarch64_sop_32_s_0_10_10_16_s2 (STACK, PLACE);	\
-    break;							\
-  case R_LARCH_B26:						\
-    grub_loongarch64_b26 (PLACE, OFFSET);			\
-    break;							\
-  case R_LARCH_ABS_HI20:					\
-    grub_loongarch64_abs_hi20 (PLACE, OFFSET);			\
-    break;							\
-  case R_LARCH_ABS_LO12:					\
-    grub_loongarch64_abs_lo12 (PLACE, OFFSET);			\
-    break;							\
-  case R_LARCH_ABS64_LO20:					\
-    grub_loongarch64_abs64_lo20 (PLACE, OFFSET);		\
-    break;							\
-  case R_LARCH_ABS64_HI12:					\
-    grub_loongarch64_abs64_hi12 (PLACE, OFFSET);		\
     break;
+//  case R_LARCH_B26:						\
+//    grub_loongarch64_b26 (PLACE, OFFSET);			\
+//    break;							\
+//  case R_LARCH_ABS_HI20:					\
+//    grub_loongarch64_abs_hi20 (PLACE, OFFSET);			\
+//    break;							\
+//  case R_LARCH_ABS_LO12:					\
+//    grub_loongarch64_abs_lo12 (PLACE, OFFSET);			\
+//    break;							\
+//  case R_LARCH_ABS64_LO20:					\
+//    grub_loongarch64_abs64_lo20 (PLACE, OFFSET);		\
+//    break;							\
+//  case R_LARCH_ABS64_HI12:					\
+//    grub_loongarch64_abs64_hi12 (PLACE, OFFSET);		\
+//    break;
 
 #endif /* GRUB_LOONGARCH64_RELOC_H */

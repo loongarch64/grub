@@ -784,9 +784,13 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 #ifdef MKIMAGE_ELF64
   struct grub_ia64_trampoline *tr = (void *) (pe_target + tramp_off);
   grub_uint64_t *gpptr = (void *) (pe_target + got_off);
+  grub_util_info ("got addr: %llx\n", gpptr);
   unsigned unmatched_adr_got_page = 0;
   struct grub_loongarch64_stack stack;
   grub_loongarch64_stack_init (&stack);
+
+  int la_got_flag=0;
+  int reg_flags[32] = {0};
 #define MASK19 ((1 << 19) - 1)
 #else
   grub_uint32_t *tr = (void *) (pe_target + tramp_off);
@@ -838,8 +842,7 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 	    Elf_Addr sym_addr;
 	    Elf_Addr *target;
 	    Elf_Addr addend;
-
-	    int la_got_flag=0;
+	    const char* sym_name;
 
 	    offset = grub_target_to_host (r->r_offset);
 	    target = SUFFIX (get_target_address) (e, target_section,
@@ -848,7 +851,6 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 	    info = grub_target_to_host (r->r_info);
 	    sym_addr = SUFFIX (get_symbol_address) (e, smd->symtab,
 						    ELF_R_SYM (info), image_target);
-
             addend = (s->sh_type == grub_target_to_host32 (SHT_RELA)) ?
 	      grub_target_to_host (r->r_addend) : 0;
 
@@ -1135,6 +1137,7 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 	     case EM_LOONGARCH:
 	       {
 		 sym_addr += addend;
+		 int id = ELF_R_SYM (info);
 		 switch (ELF_R_TYPE (info))
 		   {
 		   case R_LARCH_64:
@@ -1149,115 +1152,126 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 						  +offset
 						  +image_target->vaddr_offset));
 		     break;
+		   case R_LARCH_B26:
+		     grub_loongarch64_b26 (target, sym_addr);
+		     grub_util_info ("B26 idx: %d, target: %x, addr: %x, addend: %llx", id, *target, sym_addr, addend);
+		     break;
+		   case R_LARCH_ABS_HI20:
+		     grub_util_info ("HI20 idx: %d, target: %x, addr: %x, addend: %llx", id, *target, sym_addr, addend);
+		     grub_loongarch64_abs_hi20 (target, sym_addr);
+		     break;
+		   case R_LARCH_ABS_LO12:
+		     grub_util_info ("LO12 idx: %d, target: %x, addr: %x, addend: %llx", id, *target, sym_addr, addend);
+		     grub_loongarch64_abs_lo12 (target, sym_addr);
+		     break;
+		   case R_LARCH_ABS64_LO20:
+		     grub_util_info ("LO20 idx: %d, target: %x, addr: %x, addend: %llx", id, *target, sym_addr, addend);
+		     grub_loongarch64_abs64_lo20 (target, sym_addr);
+		     break;
+		   case R_LARCH_ABS64_HI12:
+		     grub_util_info ("HI12 idx: %d, target: %x, reg: %x, addend: %llx", id, *target, sym_addr, addend);
+		     grub_loongarch64_abs64_hi12 (target, sym_addr);
+		     break;
+// |`lu12i.w` |DSj20
+// |`lu32i.d` |DSj20
+// |`lu52i.d` |DJSk12
+// |`addi.d`  |DJSk12
+// |`ld.d`    |DJSk12
 		   case R_LARCH_GOT64_HI20:
 		       {
-			 if (unmatched_adr_got_page == 0) {
-			     *gpptr = grub_host_to_target64 (sym_addr);
-			 }
-			 unmatched_adr_got_page++;
-			 grub_loongarch64_got64_hi20 (target, got_off);
-		       grub_util_info ("hi20, got_off:  %lx %lx %lx",got_off, target, image_target->vaddr_offset);
-			 if (unmatched_adr_got_page == 4) {
-			     gpptr++;
-			     unmatched_adr_got_page = 0;
-			 }
+			 //case R_LARCH_GOT64_LO20:
+			 //case R_LARCH_GOT64_HI12:
+			 //case R_LARCH_GOT64_LO12:
+			 grub_int64_t gpoffset = ((char *) gpptr - (char *) pe_target + image_target->vaddr_offset)
+			   - (offset + target_section_addr + image_target->vaddr_offset);
+
+
+			 gpptr[id] = grub_host_to_target64 (sym_addr);
+			 grub_loongarch64_got64_hi20 (target, gpptr + id * 8);
+			 grub_util_info ("symtab idx: %d, target: %x, addr: %x", id, *target, sym_addr);
 
 #if 0
-			if(la_got_flag == 0){
-			     *(grub_uint64_t*)(got_off_addr)= sym_addr;
-			}
-			la_got_flag++;
 
-			*target = (*target) | ((got_off & 0xfffff000)>>12<<5);
-			if(la_got_flag == 4){
-				got_off++;
-				la_got_flag = 0;
-			}
+			 int reg = grub_target_to_host64 (*target) & 0x1f;
+			 if (reg_flags[reg] == 0) {
+			     *gpptr = grub_host_to_target64 (sym_addr);
+			 }
+			 reg_flags[reg]++;
+			 if (reg_flags[reg] == 4) {
+			     reg_flags[reg] = 0;
+			     gpptr++;
+			 }
+			 grub_util_info ("target: %lx, reg: %d", *target, reg);
+			 grub_util_info ("hi20, got_off: %lx %lx %lx %lx", sym_addr, got_off, target, image_target->vaddr_offset);
 #endif
 		       }
 		     break;
 		   case R_LARCH_GOT64_LO20:
 		       {
-			 if (unmatched_adr_got_page == 0) {
+			 grub_loongarch64_got64_lo20 (target, gpptr + id * 8);
+			 grub_util_info ("symtab idx: %d, target: %x, addr: %x", id, *target, sym_addr);
+#if 0
+			 int reg = *target & 0x1f;
+			 if (reg_flags[reg] == 0) {
 			     *gpptr = grub_host_to_target64 (sym_addr);
 			 }
-			 unmatched_adr_got_page++;
-			 grub_loongarch64_got64_lo20 (target, got_off);
-		       grub_util_info ("lo20 got_off:  %lx %lx %lx",got_off,target,image_target->vaddr_offset);
-			 if (unmatched_adr_got_page == 4) {
+			 grub_util_info ("target: %x, reg: %d", *target, reg);
+			 reg_flags[reg]++;
+			 grub_loongarch64_got64_lo20 (target,  gpptr + got_off + image_target->vaddr_offset);
+			 if (reg_flags[reg] == 4) {
 			     //got_off++;
 			     gpptr++;
-			     unmatched_adr_got_page = 0;
+			     reg_flags[reg] = 0;
 			 }
-
-#if 0
-			if(la_got_flag == 0){
-			     *(grub_uint64_t*)(got_off_addr)= sym_addr;
-			}
-			la_got_flag++;
-			*target = (*target) | ((got_off& 0xfffff00000000)>>32<<5)     ;
-			if(la_got_flag == 4){
-				got_off++;
-				la_got_flag = 0;
-			}
+		       grub_util_info ("lo20 got_off: %lx %lx %lx %lx",sym_addr, got_off,target,image_target->vaddr_offset);
 #endif
 		       }
 		     break;
 		   case R_LARCH_GOT64_HI12:
 		       {
-			 if (unmatched_adr_got_page == 0) {
+			 int id = ELF_R_SYM (info);
+			 gpptr[id] = grub_host_to_target64 (sym_addr);
+			 grub_loongarch64_got64_hi12 (target, gpptr + id * 8);
+			 grub_util_info ("symtab idx: %d, target: %x, addr: %x", id, *target, sym_addr);
+#if 0
+			 int reg = *target & 0x1f;
+			 if (reg_flags[reg] == 0) {
 			     *gpptr = grub_host_to_target64 (sym_addr);
 			 }
-			 unmatched_adr_got_page++;
-			 grub_loongarch64_got64_hi12 (target, got_off);
-		       grub_util_info ("hi12 got_off:  %lx %lx %lx",got_off,target,image_target->vaddr_offset);
-			 if (unmatched_adr_got_page == 4) {
-			     //got_off++;
+			 grub_util_info ("target: %x, reg: %d", *target, reg);
+			 reg_flags[reg]++;
+			 grub_loongarch64_got64_hi12 (target,  gpptr + got_off + image_target->vaddr_offset);
+			 if (reg_flags[reg] == 4) {
 			     gpptr++;
-			     unmatched_adr_got_page = 0;
+			     reg_flags[reg] = 0;
 			 }
-#if 0
-			if(la_got_flag == 0){
-			     *(grub_uint64_t*)(got_off_addr)= sym_addr;
-			}
-			la_got_flag++;
-			*target = (*target) | ((got_off& 0xfff0000000000000)>>52<<10)     ;
-			if(la_got_flag == 4){
-				got_off++;
-				la_got_flag = 0;
-			}
+			 grub_util_info ("hi12 got_off:  %lx %lx %lx %lx", sym_addr, got_off,target,image_target->vaddr_offset);
 #endif
-		       //grub_util_info ("got_off:  %lx",got_off);
 		       }
 		     break;
 		   case R_LARCH_GOT64_LO12:
 		       {
-			 if (unmatched_adr_got_page == 0) {
+			 int id = ELF_R_SYM (info);
+			 gpptr[id] = grub_host_to_target64 (sym_addr);
+			 grub_loongarch64_got64_lo12 (target, gpptr + id * 8);
+			 grub_util_info ("symtab idx: %d, target: %x, addr: %x", id, *target, sym_addr);
+#if 0
+			 int reg = *target & 0x1f;
+			 if (reg_flags[reg] == 0) {
 			     *gpptr = grub_host_to_target64 (sym_addr);
 			 }
-			 unmatched_adr_got_page++;
-			 grub_loongarch64_got64_lo12 (target, got_off);
-			 grub_util_info ("lo12 got_off: %lx %lx %lx %lx", sym_addr, got_off, target, image_target->vaddr_offset);
-			 if (unmatched_adr_got_page == 4) {
-			     //got_off++;
+			 grub_util_info ("target: %x, reg: %d", *target, reg);
+			 reg_flags[reg]++;
+			 grub_loongarch64_got64_lo12 (target,  gpptr + got_off + image_target->vaddr_offset);
+			 if (reg_flags[reg] == 4) {
 			     gpptr++;
-			     unmatched_adr_got_page = 0;
+			     reg_flags[reg] = 0;
 			 }
-#if 0
-			if(la_got_flag == 0){
-			     *(grub_uint64_t*)(got_off_addr)= sym_addr;
-			}
-			la_got_flag++;
-			*target = (*target) | ((got_off& 0xfff)<<10)     ;
-			if(la_got_flag == 4){
-				got_off++;
-				la_got_flag = 0;
-			}
+			 grub_util_info ("lo12 got_off: %lx %lx %lx %lx", sym_addr, got_off, target, image_target->vaddr_offset);
 #endif
-		       //grub_util_info ("got_off:  %lx",got_off);
 		       }
 		     break;
-		   GRUB_LOONGARCH64_RELOCATION (&stack, target, sym_addr)
+		   //GRUB_LOONGARCH64_RELOCATION (&stack, target, sym_addr)
 		   default:
 		     grub_util_error (_("relocation 0x%x is not implemented yet"),
 				      (unsigned int) ELF_R_TYPE (info));
@@ -2592,11 +2606,14 @@ SUFFIX (grub_mkimage_load_image) (const char *kernel_path,
 	}
       if (image_target->elf_target == EM_LOONGARCH)
 	{
+	  grub_size_t tramp;
+
 	  layout->kernel_size = ALIGN_UP (layout->kernel_size, 16);
 
-	  grub_loongarch64_dl_get_got_size (e, &layout->got_size);
+	  grub_loongarch64_dl_get_tramp_got_size (e, &tramp, &layout->got_size);
 
 	  layout->got_off = layout->kernel_size;
+	  grub_util_info ("LOONG got_size: %d", layout->got_size);
 	  layout->kernel_size += ALIGN_UP (layout->got_size, 16);
 	}
 #endif
@@ -2661,4 +2678,5 @@ SUFFIX (grub_mkimage_load_image) (const char *kernel_path,
   smd.addrs = NULL;
 
   return out_img;
+
 }

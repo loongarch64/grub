@@ -99,7 +99,7 @@ grub_arch_dl_relocate_symbols (grub_dl_t mod, void *ehdr,
 //		  got_off++;
 //		  unmatched_adr_got_page = 0;
 //	      }
-	GRUB_LOONGARCH64_RELOCATION (&stack, place, sym_addr)
+	//GRUB_LOONGARCH64_RELOCATION (&stack, place, sym_addr)
 	default:
 	  {
 	    char rel_info[17]; /* log16(2^64) = 16, plus NUL.  */
