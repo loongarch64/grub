@@ -854,19 +854,21 @@ if ( test "x$target_cpu" = xi386 || test "x$target_cpu" = xx86_64 ); then
   fi
 fi
 
-if test "x$target_cpu" = xloongarch64; then
-  AC_CACHE_CHECK([whether -Wa,-mla-global-with-abs works], [grub_cv_cc_mla_global_with_abs], [
-    CFLAGS="$TARGET_CFLAGS -Wa,-mla-global-with-abs -Werror"
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-	[grub_cv_cc_mla_global_with_abs=yes],
-	[grub_cv_cc_mla_global_with_abs=no])
-  ])
-
-  if test "x$grub_cv_cc_mla_global_with_abs" = xyes; then
-    TARGET_CFLAGS="$TARGET_CFLAGS -Wa,-mla-global-with-abs"
-    TARGET_CCASFLAGS="$TARGET_CCASFLAGS -Wa,-mla-global-with-abs"
-  fi
-fi
+#if test "x$target_cpu" = xloongarch64; then
+#  AC_CACHE_CHECK([whether -Wa,-mla-global-with-abs works], [grub_cv_cc_mla_global_with_abs], [
+#    CFLAGS="$TARGET_CFLAGS -Wa,-mla-global-with-abs -Werror"
+#    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
+#	[grub_cv_cc_mla_global_with_abs=yes],
+#	[grub_cv_cc_mla_global_with_abs=no])
+#  ])
+#
+#  if test "x$grub_cv_cc_mla_global_with_abs" = xyes; then
+#    TARGET_CFLAGS="$TARGET_CFLAGS -Wa,-mla-global-with-abs"
+#    TARGET_CCASFLAGS="$TARGET_CCASFLAGS -Wa,-mla-global-with-abs"
+#  fi
+#fi
+TARGET_CFLAGS="$TARGET_CFLAGS -mno-explicit-relocs"
+TARGET_CCASFLAGS="$TARGET_CCASFLAGS -mno-explicit-relocs"
 
 # GRUB doesn't use float or doubles at all. Yet some toolchains may decide
 # that floats are a good fit to run instead of what's written in the code.
@@ -898,6 +900,11 @@ if test x"$platform" != xemu ; then
        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
 		         [grub_cv_target_cc_soft_float="-march=rv64imac_zicsr_zifencei -mabi=lp64"], [])
     fi
+#    if test "x$target_cpu" = xloongarch64; then
+#       CFLAGS="$TARGET_CFLAGS -mno-explicit-reloc"
+#       AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
+#		         [grub_cv_target_cc_soft_float="-mno-explicit-reloc"], [])
+#    fi
     if test "x$target_cpu" = xia64; then
        CFLAGS="$TARGET_CFLAGS -mno-inline-float-divide -mno-inline-sqrt -Werror"
        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],

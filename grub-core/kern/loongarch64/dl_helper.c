@@ -201,6 +201,7 @@ grub_loongarch64_sop_32_s_0_10_10_16_s2 (grub_loongarch64_stack_t stack,
   *place =(*place) | ((a >> 18) & 0x3ff);
 }
 
+
 /*
 R_LARCH_B26              66        (*(uint32_t *) PC)[9:0] = (S+A-PC)[27:18]
                                    (*(uint32_t *) PC)[25:10] = (S+A-PC)[17:2]
@@ -251,6 +252,42 @@ R_LARCH_ABS64_HI12       70        (*(uint32_t *) PC)[21:10] = (S+A)[63:52]
 void grub_loongarch64_abs64_hi12 (grub_uint32_t *place, grub_uint64_t offset)
 {
   *place |= (((offset >> 52) & 0xfff) << 10);
+}
+
+/* PCREL: 32/64
+   pcalau12i
+   %pc_hi20 (sym).
+R_LARCH_PCALA_HI20, 71
+(*(uint32_t *) PC) [24 ... 5] = (((S+A) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]
+
+注意：所有相对 PC 偏移计算都不包含低12位。
+*/
+void grub_loongarch64_pcal_hi20 (grub_uint32_t *place, grub_uint64_t offset)
+{
+  *place |= (((offset >> 12) & 0xfffff) << 5);
+}
+
+
+/* GOT: 32/64
+   pcalau12i
+   %got_pc_hi20 (got).
+R_LARCH_GOT_PC_HI20		      75
+(*(uint32_t *) PC) [24 ... 5] = (((GP+G) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]
+*/
+void grub_loongarch64_got_pc_hi20 (grub_uint32_t *place, grub_uint64_t offset)
+{
+  *place |= (((offset >> 12) & 0xfffff) << 5);
+}
+
+/* GOT: 32/64
+   ld.w/ld.d
+   %got_pc_lo12 (got).
+R_LARCH_GOT_PC_LO12		      76
+(*(uint32_t *) PC) [21 ... 10] = (GP+G) [11 ... 0]
+*/
+void grub_loongarch64_got_pc_lo12 (grub_uint32_t *place, grub_uint64_t offset)
+{
+  *place |= ((offset & 0xfff) << 10);
 }
 
 /*

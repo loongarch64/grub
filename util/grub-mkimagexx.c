@@ -1203,6 +1203,38 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 		     grub_loongarch64_abs64_hi12 (target, sym_addr);
 		     grub_util_info ("[A_HI12 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
 		     break;
+		   case R_LARCH_PCALA_HI20:
+		     grub_util_info ("[L_HI12 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
+		     grub_loongarch64_pcal_hi20 (target, (sym_addr & ~0xfff) - (pc & ~0xfff));
+		     grub_util_info ("L_HI12] id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
+		       break;
+		   case R_LARCH_GOT_PC_HI20:
+		     /*
+			R_LARCH_GOT_PC_HI20		      75
+			(*(uint32_t *) PC) [24 ... 5] = (((GP+G) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]
+			*/
+		       {
+			 int idx =  get_current_idx (id);
+			 grub_uint64_t gp_g = got_off + image_target->vaddr_offset + idx * 8;
+
+			 grub_util_info ("[P_HI20 idx: %d, *target: %x, target: %x, addr: %lx, addend: %lx, off: %lx", idx, *target, target, sym_addr, addend, got_off);
+			 *(gpptr+idx) = grub_host_to_target64 (sym_addr);
+			 grub_loongarch64_got_pc_hi20 (target, (gp_g & ~0xfff) - (pc & ~0xfff));
+			 grub_util_info ("P_HI20] idx: %d, *target: %x, target: %x, addr: %lx, addend: %lx, off: %lx", idx, *target, target, sym_addr, addend, got_off);
+		       }
+		     break;
+		   case R_LARCH_GOT_PC_LO12:
+		       {
+			 int idx =  get_current_idx (id);
+			 grub_uint64_t gp_g = got_off + image_target->vaddr_offset + idx * 8;
+
+			 grub_util_info ("[P_LO20 idx: %d, *target: %x, target: %x, addr: %lx, addend: %lx, off: %lx", idx, *target, target, sym_addr, addend, got_off);
+			 *(gpptr+idx) = grub_host_to_target64 (sym_addr);
+			 grub_loongarch64_got_lo12 (target, gp_g);
+			 grub_util_info ("P_LO20] idx: %d, *target: %x, target: %x, addr: %lx, addend: %lx, off: %lx", idx, *target, target, sym_addr, addend, got_off);
+		       }
+		     break;
+
 		   case R_LARCH_GOT_HI20:
 		       {
 #if 1
@@ -1906,6 +1938,8 @@ translate_relocation_pe (struct translate_context *ctx,
 	case R_LARCH_B26:
 	case R_LARCH_ABS_HI20:
 	case R_LARCH_ABS_LO12:
+	case R_LARCH_GOT_PC_HI20:
+	case R_LARCH_GOT_PC_LO12:
 	case R_LARCH_ABS64_LO20:
 	case R_LARCH_ABS64_HI12:
 	case R_LARCH_GOT_HI20:
