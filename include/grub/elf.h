@@ -2569,8 +2569,8 @@ typedef Elf32_Addr Elf32_Conflict;
 #define R_LARCH_GOT_PC_LO12		      76
 #define R_LARCH_GOT64_PC_LO20		      77
 #define R_LARCH_GOT64_PC_HI12		      78
-#define R_LARCH_GOT64_HI20		      79
-#define R_LARCH_GOT64_LO12		      80
+#define R_LARCH_GOT_HI20		      79
+#define R_LARCH_GOT_LO12		      80
 #define R_LARCH_GOT64_LO20		      81
 #define R_LARCH_GOT64_HI12		      82
 #define R_LARCH_TLS_LE_HI20		      83

@@ -30,7 +30,6 @@ struct grub_loongarch64_stack
 };
 
 typedef struct grub_loongarch64_stack* grub_loongarch64_stack_t;
-grub_err_t grub_loongarch64_dl_get_got_size (const void *ehdr, grub_size_t *got);
 
 void grub_loongarch64_stack_init	     (grub_loongarch64_stack_t stack);
 void grub_loongarch64_sop_push		     (grub_loongarch64_stack_t stack,
@@ -59,18 +58,18 @@ void grub_loongarch64_sop_32_s_0_10_10_16_s2 (grub_loongarch64_stack_t stack,
 					      grub_uint64_t *place);
 
 void grub_loongarch64_b26		      (grub_uint32_t *place,
-					       grub_uint64_t offset);
+					       grub_int32_t offset);
 void grub_loongarch64_abs_hi20		      (grub_uint32_t *place,
-					       grub_uint64_t offset);
+					       grub_uint32_t offset);
 void grub_loongarch64_abs_lo12		      (grub_uint32_t *place,
-					       grub_uint64_t offset);
+					       grub_uint32_t offset);
 void grub_loongarch64_abs64_lo20	      (grub_uint32_t *place,
 					       grub_uint64_t offset);
 void grub_loongarch64_abs64_hi12	      (grub_uint32_t *place,
 					       grub_uint64_t offset);
-void grub_loongarch64_got64_hi20 	      (grub_uint32_t *place,
+void grub_loongarch64_got_hi20 	      (grub_uint32_t *place,
 					       grub_uint64_t offset);
-void grub_loongarch64_got64_lo12 	      (grub_uint32_t *place,
+void grub_loongarch64_got_lo12 	      (grub_uint32_t *place,
 					       grub_uint64_t offset);
 void grub_loongarch64_got64_lo20 	      (grub_uint32_t *place,
 					       grub_uint64_t offset);

@@ -281,18 +281,12 @@ grub_ia64_dl_get_tramp_got_size (const void *ehdr, grub_size_t *tramp,
 grub_err_t
 grub_arm64_dl_get_tramp_got_size (const void *ehdr, grub_size_t *tramp,
 				  grub_size_t *got);
-grub_err_t
-grub_loongarch64_dl_get_tramp_got_size (const void *ehdr, grub_size_t *tramp,
-					grub_size_t *got);
-
 #if defined (__ia64__)
 #define GRUB_ARCH_DL_TRAMP_ALIGN GRUB_IA64_DL_TRAMP_ALIGN
 #define GRUB_ARCH_DL_GOT_ALIGN GRUB_IA64_DL_GOT_ALIGN
 #define grub_arch_dl_get_tramp_got_size grub_ia64_dl_get_tramp_got_size
 #elif defined (__aarch64__)
 #define grub_arch_dl_get_tramp_got_size grub_arm64_dl_get_tramp_got_size
-#elif defined (__loongarch64__)
-#define grub_arch_dl_get_tramp_got_size grub_loongarch64_dl_get_tramp_got_size
 #else
 grub_err_t
 grub_arch_dl_get_tramp_got_size (const void *ehdr, grub_size_t *tramp,
