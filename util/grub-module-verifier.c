@@ -145,8 +145,8 @@ struct grub_module_verifier_arch archs[] = {
       R_LARCH_ABS_LO12,
       R_LARCH_ABS64_LO20,
       R_LARCH_ABS64_HI12,
-      R_LARCH_GOT64_HI20,
-      R_LARCH_GOT64_LO12,
+      R_LARCH_GOT_HI20,
+      R_LARCH_GOT_LO12,
       R_LARCH_GOT64_LO20,
       R_LARCH_GOT64_HI12,
       -1

@@ -214,6 +214,7 @@ void grub_loongarch64_b26 (grub_uint32_t *place, grub_int32_t offset)
 }
 
 /*
+lu12i.w
 R_LARCH_ABS_HI20         67        (*(uint32_t *) PC)[24:5] = (S+A)[31:12]
 */
 void grub_loongarch64_abs_hi20 (grub_uint32_t *place, grub_uint32_t offset)
@@ -222,10 +223,17 @@ void grub_loongarch64_abs_hi20 (grub_uint32_t *place, grub_uint32_t offset)
 }
 
 /*
+ori
+addi.d
 R_LARCH_ABS_LO12         68        (*(uint32_t *) PC)[21:10] = (S+A)[11:0]
 */
 void grub_loongarch64_abs_lo12 (grub_uint32_t *place, grub_uint32_t offset)
 {
+  /*
+  1004:      03bf40c6        ori             $a2, $a2, 0xfd0
+  038:       28fe8184        ld.d            $a0, $t0, -96(0xfa0)
+  */
+
   *place |= ((offset & 0xfff) << 10);
 }
 
@@ -255,6 +263,7 @@ void grub_loongarch64_got_hi20 (grub_uint32_t *place, grub_uint64_t offset)
 }
 
 /*
+ld.d
 R_LARCH_GOT_LO12       80        (*(uint32_t *) PC)[21:10] = (GP+G)[11:0]
 */
 void grub_loongarch64_got_lo12 (grub_uint32_t *place, grub_uint64_t offset)
@@ -263,7 +272,7 @@ void grub_loongarch64_got_lo12 (grub_uint32_t *place, grub_uint64_t offset)
 }
 
 /*
-lu52i.d
+lu32i.d
 R_LARCH_GOT64_LO20       81        (*(uint32_t *) PC)[24:5] = (GP+G)[51:32]
 */
 void grub_loongarch64_got64_lo20 (grub_uint32_t *place, grub_uint64_t offset)
@@ -272,7 +281,7 @@ void grub_loongarch64_got64_lo20 (grub_uint32_t *place, grub_uint64_t offset)
 }
 
 /*
-lu32i.d
+lu52i.d
 R_LARCH_GOT64_HI12       82        (*(uint32_t *) PC)[21:10] = (GP+G)[63:52]
 */
 void grub_loongarch64_got64_hi12 (grub_uint32_t *place, grub_uint64_t offset)

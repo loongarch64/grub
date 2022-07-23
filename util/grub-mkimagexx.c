@@ -770,6 +770,7 @@ static int
 SUFFIX (is_kept_reloc_section) (Elf_Shdr *s, const struct grub_install_image_target_desc *image_target,
 				struct section_metadata *smd);
 
+#ifdef MKIMAGE_ELF64
 int got_tab[300];
 static int idx = 0;
 int get_current_idx (grub_uint32_t id)
@@ -784,6 +785,7 @@ int get_current_idx (grub_uint32_t id)
   got_tab[idx] = id;
   return idx++;
 }
+#endif
 
 /* Deal with relocation information. This function relocates addresses
    within the virtual address space starting from 0. So only relative
@@ -1182,16 +1184,24 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 		       }
 		     break;
 		   case R_LARCH_ABS_HI20:
+		     grub_util_info ("[A_HI20 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
 		     grub_loongarch64_abs_hi20 (target, sym_addr);
+		     grub_util_info ("A_HI20] id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
 		     break;
 		   case R_LARCH_ABS_LO12:
+		     grub_util_info ("[A_LO12 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
 		     grub_loongarch64_abs_lo12 (target, sym_addr);
+		     grub_util_info ("A_LO12] id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
 		     break;
 		   case R_LARCH_ABS64_LO20:
+		     grub_util_info ("[A_LO20 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
 		     grub_loongarch64_abs64_lo20 (target, sym_addr);
+		     grub_util_info ("[A_LO20 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
 		     break;
 		   case R_LARCH_ABS64_HI12:
+		     grub_util_info ("[A_HI12 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
 		     grub_loongarch64_abs64_hi12 (target, sym_addr);
+		     grub_util_info ("[A_HI12 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
 		     break;
 		   case R_LARCH_GOT_HI20:
 		       {
