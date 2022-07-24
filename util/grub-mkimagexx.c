@@ -859,13 +859,10 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 	    Elf_Addr sym_addr;
 	    Elf_Addr *target;
 	    Elf_Addr addend;
-	    const char* sym_name;
 
 	    offset = grub_target_to_host (r->r_offset);
 	    target = SUFFIX (get_target_address) (e, target_section,
 						  offset, image_target);
-   	    grub_uint64_t got_off_addr = (grub_uint64_t)e  + got_off;
-	    grub_util_info ("got_off_addr: %lx", got_off_addr);
 	    info = grub_target_to_host (r->r_info);
 	    sym_addr = SUFFIX (get_symbol_address) (e, smd->symtab,
 						    ELF_R_SYM (info), image_target);
@@ -1155,13 +1152,11 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 	     case EM_LOONGARCH:
 	       {
 		 sym_addr += addend;
-		 grub_int64_t off;
 		 grub_uint64_t pc;
 
 		 int id = ELF_R_SYM (info);
 		 pc = offset + target_section_addr + image_target->vaddr_offset;
-		 const char *sname = smd->strtab + grub_host_to_target32 (s->sh_name);
-		 grub_int64_t gpoffset = ((char *) gpptr - (char *) pe_target + image_target->vaddr_offset) - pc;
+
 		 switch (ELF_R_TYPE (info))
 		   {
 		   case R_LARCH_64:
@@ -1204,9 +1199,13 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 		     grub_util_info ("[A_HI12 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
 		     break;
 		   case R_LARCH_PCALA_HI20:
-		     grub_util_info ("[L_HI12 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
-		     grub_loongarch64_pcal_hi20 (target, (sym_addr & ~0xfff) - (pc & ~0xfff));
-		     grub_util_info ("L_HI12] id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
+		     grub_util_info ("[L_HI20 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
+		     grub_loongarch64_pcala_hi20 (target, (sym_addr & ~0xfff) - (pc & ~0xfff));
+		     grub_util_info ("L_HI20] id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
+		   case R_LARCH_PCALA_LO12:
+		     grub_util_info ("[L_LO12 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
+		     grub_loongarch64_pcala_lo12 (target, sym_addr);
+		     grub_util_info ("L_LO12] id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
 		       break;
 		   case R_LARCH_GOT_PC_HI20:
 		     /*
@@ -1268,10 +1267,10 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 		       {
 #if 1
 			 int idx =  get_current_idx (id);
-			 grub_util_info ("[G_LO12 idx: %d, *target: %x, gpoffset: %x, addr: %lx, addend: %lx, off: %lx", idx, *target, gpoffset, sym_addr, addend, got_off);
+			 grub_util_info ("[G_LO12 idx: %d, *target: %x, addr: %lx, addend: %lx, off: %lx", idx, *target, sym_addr, addend, got_off);
 			 *(gpptr+idx) = grub_host_to_target64 (sym_addr);
 			 grub_loongarch64_got_lo12 (target, got_off + image_target->vaddr_offset+ idx*8);
-			 grub_util_info ("G_LO12] idx: %d, *target: %x, target: %x, addr: %lx, addend: %lx, off: %lx", idx, *target, gpoffset, sym_addr, addend, got_off);
+			 grub_util_info ("G_LO12] idx: %d, *target: %x, addr: %lx, addend: %lx, off: %lx", idx, *target, sym_addr, addend, got_off);
 #else
 			 int reg = *target & 0x1f;
 			 grub_util_info ("[G_LO12 idx: %d, *target: %x, target: %x, addr: %lx, addend: %lx, off: %lx %lx", id, *target, target, sym_addr, addend, got_off, gpoffset);
@@ -1938,6 +1937,8 @@ translate_relocation_pe (struct translate_context *ctx,
 	case R_LARCH_B26:
 	case R_LARCH_ABS_HI20:
 	case R_LARCH_ABS_LO12:
+	case R_LARCH_PCALA_HI20:
+	case R_LARCH_PCALA_LO12:
 	case R_LARCH_GOT_PC_HI20:
 	case R_LARCH_GOT_PC_LO12:
 	case R_LARCH_ABS64_LO20:

@@ -262,11 +262,20 @@ R_LARCH_PCALA_HI20, 71
 
 注意：所有相对 PC 偏移计算都不包含低12位。
 */
-void grub_loongarch64_pcal_hi20 (grub_uint32_t *place, grub_uint64_t offset)
+void grub_loongarch64_pcala_hi20 (grub_uint32_t *place, grub_uint64_t offset)
 {
   *place |= (((offset >> 12) & 0xfffff) << 5);
 }
 
+/* PCREL: 32/64
+   pcalau12i
+   %pc_hi20 (sym).
+R_LARCH_PCALA_LO12, 72 (*(uint32_t *) PC) [21 ... 10] = (S+A) [11 ... 0]
+*/
+void grub_loongarch64_pcala_lo12 (grub_uint32_t *place, grub_uint64_t offset)
+{
+  *place |= ((offset & 0xfff) << 10);
+}
 
 /* GOT: 32/64
    pcalau12i
