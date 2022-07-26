@@ -238,3 +238,4 @@ grub_ia64_dl_get_tramp_got_size (const void *ehdr, grub_size_t *tramp,
 
   return GRUB_ERR_NONE;
 }
+

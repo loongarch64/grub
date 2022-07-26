@@ -35,37 +35,6 @@
 #include <grub/machine/memory.h>
 #endif
 
-#include <grub/efi/efi.h>
-#include <grub/efi/console.h>
-#include <grub/efi/disk.h>
-#include <grub/efi/sb.h>
-#include <grub/misc.h>
-#include <grub/env.h>
-#include <grub/charset.h>
-
-static void grub_efi_printf(void)
-{
-
-#if 1
-  char* var = "* GRUB: *\r\n";
-  grub_efi_char16_t *var16;
-  grub_size_t len, len16;
-
-  len = grub_strlen (var);
-  len16 = len * GRUB_MAX_UTF16_PER_UTF8;
-  var16 = grub_calloc (len16 + 1, sizeof (var16[0]));
-  if (!var16)
-    return;
-  len16 = grub_utf8_to_utf16 (var16, len16, (grub_uint8_t *) var, len, NULL);
-  var16[len16] = 0;
-#endif
-
-  grub_efi_simple_text_output_interface_t *o;
-
-  o = grub_efi_system_table->con_out;
-  efi_call_2 (o->output_string, o, var16);
-}
-
 grub_addr_t
 grub_modules_get_end (void)
 {
