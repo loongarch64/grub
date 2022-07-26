@@ -855,16 +855,16 @@ if ( test "x$target_cpu" = xi386 || test "x$target_cpu" = xx86_64 ); then
 fi
 
 if test "x$target_cpu" = xloongarch64; then
-  AC_CACHE_CHECK([whether -Wa,-mla-global-with-abs works], [grub_cv_cc_la_global_with_abs], [
-    CFLAGS="$TARGET_CFLAGS -Wa,-mla-global-with-abs -Werror"
+  AC_CACHE_CHECK([whether -Wa,-mla-global-with-pcrel works], [grub_cv_cc_la_global_with_pcrel], [
+    CFLAGS="$TARGET_CFLAGS -Wa,-mla-global-with-pcrel -Werror"
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-	[grub_cv_cc_la_global_with_abs=yes],
-	[grub_cv_cc_la_global_with_abs=no])
+	[grub_cv_cc_la_global_with_pcrel=yes],
+	[grub_cv_cc_la_global_with_pcrel=no])
   ])
 
-  if test "x$grub_cv_cc_la_global_with_abs" = xyes; then
-    TARGET_CFLAGS="$TARGET_CFLAGS -Wa,-mla-global-with-abs"
-    TARGET_CCASFLAGS="$TARGET_CCASFLAGS -Wa,-mla-global-with-abs"
+  if test "x$grub_cv_cc_la_global_with_pcrel" = xyes; then
+    TARGET_CFLAGS="$TARGET_CFLAGS -Wa,-mla-global-with-pcrel"
+    TARGET_CCASFLAGS="$TARGET_CCASFLAGS -Wa,-mla-global-with-pcrel"
   fi
   TARGET_CFLAGS="$TARGET_CFLAGS -mno-explicit-relocs"
   TARGET_CCASFLAGS="$TARGET_CCASFLAGS -mno-explicit-relocs"

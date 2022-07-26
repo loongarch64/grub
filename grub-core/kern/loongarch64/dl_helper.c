@@ -262,9 +262,9 @@ R_LARCH_PCALA_HI20, 71
 
 注意：所有相对 PC 偏移计算都不包含低12位。
 */
-void grub_loongarch64_pcala_hi20 (grub_uint32_t *place, grub_uint64_t offset)
+void grub_loongarch64_pcala_hi20 (grub_uint32_t *place, grub_int32_t offset)
 {
-  *place |= (((offset >> 12) & 0xfffff) << 5);
+  *place |= ((((offset & 0xfffff000) >> 12) & 0xfffff) << 5);
 }
 
 /* PCREL: 32/64

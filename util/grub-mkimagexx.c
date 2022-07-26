@@ -1199,14 +1199,35 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 		     grub_util_info ("[A_HI12 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
 		     break;
 		   case R_LARCH_PCALA_HI20:
-		     grub_util_info ("[L_HI20 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
-		     grub_loongarch64_pcala_hi20 (target, (sym_addr & ~0xfff) - (pc & ~0xfff));
-		     grub_util_info ("L_HI20] id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
+		       {
+			 //pcalau12i  rd, si20             # x[rd] = (PC + sext(si20 << 12)) & 0xff ffff f000
+			 // si20 = 0x0;
+			 // (*(uint32_t *) PC) [24 ... 5] = (((S+A) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]
+			 // si20 = (((S+A) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]
+			 /*
+			    S+A = 0x1004;
+			    pc  = 0xb118;  --> 0x13000
+
+			    sym_addr: 12fd0, pc: 1000, offset=11000.
+
+			    si20 = 0;
+			    */
+			 grub_int32_t si20;
+			 si20 = (sym_addr & ~0xfff) - (pc & ~0xfff);
+			 if (si20 < 0) {
+			     si20 = - si20;
+			     si20 = ~si20 + 1;
+			 }
+			 grub_util_info ("[L_HI20 id: %d, *target: %x, sym_addr: %lx, pc: %lx, offset=%lx", id, *target, sym_addr, pc, si20);
+			 grub_loongarch64_pcala_hi20 (target, si20);
+			 grub_util_info ("L_HI20] id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
+		       }
+		     break;
 		   case R_LARCH_PCALA_LO12:
 		     grub_util_info ("[L_LO12 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
 		     grub_loongarch64_pcala_lo12 (target, sym_addr);
 		     grub_util_info ("L_LO12] id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
-		       break;
+		     break;
 		   case R_LARCH_GOT_PC_HI20:
 		     /*
 			R_LARCH_GOT_PC_HI20		      75
