@@ -770,23 +770,6 @@ static int
 SUFFIX (is_kept_reloc_section) (Elf_Shdr *s, const struct grub_install_image_target_desc *image_target,
 				struct section_metadata *smd);
 
-#ifdef MKIMAGE_ELF64
-int got_tab[300];
-static int idx = 0;
-int get_current_idx (grub_uint32_t id)
-{
-  int i;
-
-  for (i = 0; i < 300; i++) {
-      if (got_tab[i] == id) {
-	  return i;
-      }
-  }
-  got_tab[idx] = id;
-  return idx++;
-}
-#endif
-
 /* Deal with relocation information. This function relocates addresses
    within the virtual address space starting from 0. So only relative
    addresses can be fully resolved. Absolute addresses must be relocated
@@ -801,7 +784,6 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 #ifdef MKIMAGE_ELF64
   struct grub_ia64_trampoline *tr = (void *) (pe_target + tramp_off);
   grub_uint64_t *gpptr = (void *) (pe_target + got_off);
-  grub_util_info ("GOT Addr: %lx, %lx, got_off: %lx, got=%lx\n", gpptr, *gpptr, got_off, pe_target);
   unsigned unmatched_adr_got_page = 0;
   struct grub_loongarch64_stack stack;
   grub_loongarch64_stack_init (&stack);
@@ -1148,10 +1130,8 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 	       }
 	     case EM_LOONGARCH:
 	       {
-		 int id;
 		 grub_int64_t pc;
 
-		 id = ELF_R_SYM (info);
 		 pc = offset + target_section_addr + image_target->vaddr_offset;
 		 sym_addr += addend;
 
@@ -1170,72 +1150,62 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 						  +image_target->vaddr_offset));
 		     break;
 		   case R_LARCH_B26:
-		       {
-			 grub_int32_t pc, s26;
-
-			 pc = offset + target_section_addr + image_target->vaddr_offset;
-			 s26 = sym_addr - pc;
-
-			 if (s26 < 0) {
-			     s26 = - s26;
-			     s26 = ~s26 + 1;
-			 }
-			 grub_loongarch64_b26 (target, sym_addr - pc);
-		       }
+		     grub_loongarch64_b26 ((grub_uint32_t *)target, sym_addr - pc);
 		     break;
 		   case R_LARCH_PCALA_HI20:
 		       {
 			 grub_int32_t si20;
+			 grub_int32_t si12;
+
 			 si20 = (sym_addr & ~0xfff) - (pc & ~0xfff);
-			 if (si20 < 0) {
-			     si20 = - si20;
-			     si20 = ~si20 + 1;
-			 }
-			 grub_util_info ("[L_HI20 id: %d, *target: %x, sym_addr: %lx, pc: %lx, offset=%lx", id, *target, sym_addr, pc, si20);
-			 grub_loongarch64_pcala_hi20 (target, si20);
-			 grub_util_info ("L_HI20] id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
+			 si12 = si20 & 0xfffULL;
+			 if (si12 > 0x7ff)
+			   si20 += 0x1000;
+			 grub_loongarch64_pcala_hi20 ((grub_uint32_t *)target, si20);
 		       }
 		     break;
 		   case R_LARCH_PCALA_LO12:
-		     grub_util_info ("[AL_LO12 id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
-		     grub_loongarch64_pcala_lo12 (target, sym_addr);
-		     grub_util_info ("AL_LO12] id: %d, *target: %x, sym_addr: %lx", id, *target, sym_addr);
+		     grub_loongarch64_pcala_lo12 ((grub_uint32_t *)target, sym_addr);
 		     break;
-#if 1
 		   case R_LARCH_GOT_PC_HI20:
-		     /*
-			R_LARCH_GOT_PC_HI20		      75
-			(*(uint32_t *) PC) [24 ... 5] = (((GP+G) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]
-			*/
 		       {
-			 int idx =  get_current_idx (id);
-			 grub_uint64_t gpg = got_off + image_target->vaddr_offset + idx * 8;
+			 Elf64_Rela *rel2;
 			 grub_int32_t si20;
+			 grub_int32_t si12;
+			 unsigned k;
 
-			 si20 = (gpg & ~0xfff) - (pc & ~0xfff);
-			 if (si20 < 0) {
-			     si20 = - si20;
-			     si20 = ~si20 + 1;
-			 }
-			 grub_util_info ("[P_HI20 idx: %d, *target: %x, target: %x, addr: %lx, addend: %lx, off: %lx", idx, *target, target, sym_addr, addend, got_off);
-			 *(gpptr+idx) = grub_host_to_target64 (sym_addr);
-			 grub_loongarch64_got_pc_hi20 (target, si20);
-			 grub_util_info ("P_HI20] idx: %d, *target: %x, target: %x, addr: %lx, addend: %lx, off: %lx", idx, *target, target, sym_addr, addend, got_off);
+			 grub_int64_t gpoffset = (char *) gpptr - (char *) pe_target + image_target->vaddr_offset;
+
+			 si20 = (gpoffset & ~0xfffULL) - (pc & ~0xfffULL);
+			 si12 = gpoffset & 0xfffULL;
+			 if (si12 > 0x7ff)
+			   si20 += 0x1000;
+			 *gpptr = grub_host_to_target64 (sym_addr);
+			 unmatched_adr_got_page++;
+			 grub_loongarch64_got_pc_hi20 ((grub_uint32_t *)target, si20);
+			 for (k = 0, rel2 = (Elf_Rela *) ((char *) r + r_size);
+			      k < num_rs;
+			      k++, rel2 = (Elf_Rela *) ((char *) rel2 + r_size))
+			   if (ELF_R_SYM (rel2->r_info) == ELF_R_SYM (r->r_info)
+			       && r->r_addend == rel2->r_addend
+			       && ELF_R_TYPE (rel2->r_info) == R_LARCH_GOT_PC_LO12)
+			     {
+			       grub_loongarch64_got_pc_lo12 ((grub_uint32_t *) SUFFIX (get_target_address) (e, target_section,
+													    grub_target_to_host (rel2->r_offset), image_target),
+							     ((char *) gpptr - (char *) pe_target + image_target->vaddr_offset));
+			       break;
+			     }
+			 if (k >= num_rs)
+			   grub_util_error ("GOT_PC_HI20 without matching GOT_PC_LO12");
+			 gpptr++;
 		       }
 		     break;
 		   case R_LARCH_GOT_PC_LO12:
-		       {
-			 int idx =  get_current_idx (id);
-			 grub_uint64_t gpg = got_off + image_target->vaddr_offset + idx * 8;
-
-			 grub_util_info ("[PC_LO12 idx: %d, *target: %x, target: %x, addr: %lx, addend: %lx, off: %lx", idx, *target, target, sym_addr, addend, got_off);
-			 *(gpptr+idx) = grub_host_to_target64 (sym_addr);
-			 grub_loongarch64_got_pc_lo12 (target, gpg);
-			 grub_util_info ("PC_LO20] idx: %d, *target: %x, target: %x, addr: %lx, addend: %lx, off: %lx", idx, *target, target, sym_addr, addend, got_off);
-		       }
+		     if (unmatched_adr_got_page == 0)
+		       grub_util_error ("GOT_PC_LO12 without matching GOT_PC_HI2");
+		     unmatched_adr_got_page--;
 		     break;
-#endif
-		   //GRUB_LOONGARCH64_RELOCATION (&stack, target, sym_addr)
+		   GRUB_LOONGARCH64_RELOCATION (&stack, target, sym_addr)
 		   default:
 		     grub_util_error (_("relocation 0x%x is not implemented yet AAA"),
 				      (unsigned int) ELF_R_TYPE (info));
@@ -2573,7 +2543,6 @@ SUFFIX (grub_mkimage_load_image) (const char *kernel_path,
 	  grub_arch_dl_get_tramp_got_size (e, &tramp, &layout->got_size);
 
 	  layout->got_off = layout->kernel_size;
-	  grub_util_info ("LOONG got_size: %d", layout->got_size);
 	  layout->kernel_size += ALIGN_UP (layout->got_size, 16);
 	}
 #endif

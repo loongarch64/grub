@@ -299,6 +299,7 @@ grub_main (void)
   grub_set_prefix_and_root ();
   grub_env_export ("root");
   grub_env_export ("prefix");
+  grub_env_set ("debug", "all");
 
   /* Reclaim space used for modules.  */
   reclaim_module_space ();
