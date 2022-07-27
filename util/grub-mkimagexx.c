@@ -838,7 +838,6 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 	    Elf_Addr sym_addr;
 	    Elf_Addr *target;
 	    Elf_Addr addend;
-	    //Elf_Addr pc;
 
 	    offset = grub_target_to_host (r->r_offset);
 	    target = SUFFIX (get_target_address) (e, target_section,
@@ -849,7 +848,6 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 
             addend = (s->sh_type == grub_target_to_host32 (SHT_RELA)) ?
 	      grub_target_to_host (r->r_addend) : 0;
-	    //pc = offset + target_section_addr + image_target->vaddr_offset;
 
 	   switch (image_target->elf_target)
 	     {
@@ -1134,7 +1132,6 @@ SUFFIX (relocate_addrs) (Elf_Ehdr *e, struct section_metadata *smd,
 
 		 pc = offset + target_section_addr + image_target->vaddr_offset;
 		 sym_addr += addend;
-
 		 switch (ELF_R_TYPE (info))
 		   {
 		   case R_LARCH_64:

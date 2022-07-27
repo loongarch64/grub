@@ -101,9 +101,8 @@ grub_arch_dl_relocate_symbols (grub_dl_t mod, void *ehdr,
 	    {
 	      grub_int32_t si20, si12;
 
-	      si20 = (sym_addr & ~0xfffULL) - (((grub_uint64_t) place) & ~0xfffULL);
-	      si12 = si20 & 0xfffULL;
-
+	      si20 = ((grub_uint64_t) sym_addr & ~0xfffULL) - (((grub_uint64_t) place) & ~0xfffULL);
+	      si12 = ((grub_uint64_t) sym_addr - (grub_uint64_t) place) & 0xfffULL;
 	      if (si12 > 0x7ff)
 		si20 += 0x1000;
 
@@ -120,12 +119,11 @@ grub_arch_dl_relocate_symbols (grub_dl_t mod, void *ehdr,
 	      grub_int32_t si12;
 	      Elf_Rela *rel2;
 
-	      grub_int64_t gpoffset = (grub_uint64_t) gp - (grub_uint64_t) place;
-
 	      si20 = ((grub_uint64_t) gp & ~0xfffULL) - (((grub_uint64_t) place) & ~0xfffULL);
-	      si12 = gpoffset & 0xfffULL;
+	      si12 = ((grub_uint64_t) gp - (grub_uint64_t) place) & 0xfffULL;
 	      if (si12 > 0x7ff)
 		si20 += 0x1000;
+
 	      *gp = (grub_uint64_t) sym_addr;
 	      mod->gotptr = gp + 1;
 	      unmatched_adr_got_page++;

@@ -59,8 +59,10 @@ void grub_loongarch64_sop_32_s_0_10_10_16_s2 (grub_loongarch64_stack_t stack,
 
 void grub_loongarch64_b26		      (grub_uint32_t *place,
 					       grub_int32_t offset);
-void grub_loongarch64_pcala_hi20 (grub_uint32_t *place, grub_int32_t offset);
-void grub_loongarch64_pcala_lo12 (grub_uint32_t *place, grub_uint64_t offset);
+void grub_loongarch64_pcala_hi20	      (grub_uint32_t *place,
+					       grub_int32_t offset);
+void grub_loongarch64_pcala_lo12	      (grub_uint32_t *place,
+					       grub_uint64_t offset);
 void grub_loongarch64_got_pc_hi20	      (grub_uint32_t *place,
 					       grub_uint64_t offset);
 void grub_loongarch64_got_pc_lo12	      (grub_uint32_t *place,
