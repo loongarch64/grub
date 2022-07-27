@@ -49,7 +49,7 @@ grub_arch_dl_relocate_symbols (grub_dl_t mod, void *ehdr,
 			       Elf_Shdr *s, grub_dl_segment_t seg)
 {
   Elf_Rel *rel, *max;
-  unsigned unmatched_adr_got_page = 0;
+  unsigned unmatched_got_pc_page = 0;
   struct grub_loongarch64_stack stack;
   grub_loongarch64_stack_init (&stack);
 
@@ -93,7 +93,6 @@ grub_arch_dl_relocate_symbols (grub_dl_t mod, void *ehdr,
 	case R_LARCH_SOP_PUSH_PLT_PCREL:
 	  grub_loongarch64_sop_push (&stack, sym_addr - (grub_uint64_t)place);
 	  break;
-#if 1
 	case R_LARCH_B26:
 	  grub_loongarch64_b26 (place, sym_addr - (grub_uint64_t) place);
 	  break;
@@ -126,7 +125,7 @@ grub_arch_dl_relocate_symbols (grub_dl_t mod, void *ehdr,
 
 	      *gp = (grub_uint64_t) sym_addr;
 	      mod->gotptr = gp + 1;
-	      unmatched_adr_got_page++;
+	      unmatched_got_pc_page++;
 	      grub_dprintf("dl", "  reloc_got %p => 0x%016llx (0x%016llx)\n",
 			   place, (unsigned long long) sym_addr, (unsigned long long) gp);
 	      grub_loongarch64_got_pc_hi20 (place, si20);
@@ -148,12 +147,11 @@ grub_arch_dl_relocate_symbols (grub_dl_t mod, void *ehdr,
 	    }
 	  break;
 	case R_LARCH_GOT_PC_LO12:
-	  if (unmatched_adr_got_page == 0)
+	  if (unmatched_got_pc_page == 0)
 	    return grub_error (GRUB_ERR_BAD_MODULE,
 			       "GOT_PC_LO12 without matching GOT_PC_HI2");
-	  unmatched_adr_got_page--;
+	  unmatched_got_pc_page--;
 	  break;
-#endif
 	GRUB_LOONGARCH64_RELOCATION (&stack, place, sym_addr)
 	default:
 	  {
